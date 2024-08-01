@@ -28,6 +28,7 @@ import {
   ImportOutlined,
   PlusOutlined,
   DeleteOutlined,
+  InboxOutlined,
 } from "@ant-design/icons";
 import { baseUrl } from "../config/index";
 import {
@@ -38,7 +39,7 @@ import {
   addFile,
   delFile,
 } from "../api/index";
-export default function Tree() {
+export default function Home() {
   const [files, setFiles] = useState([]);
   const [currentId, setCurrentId] = useState(0);
   const [currentValue, setCurrentValue] = useState("");
@@ -59,8 +60,10 @@ export default function Tree() {
     },
     onChange(info) {
       if (info.file.status === "done") {
-        message.success(`${info.file.name}上传成功!`);
+        message.success(`${info.file.name}导入成功!`);
         loadUser();
+
+        Modal.destroyAll();
       }
     },
   });
@@ -79,8 +82,6 @@ export default function Tree() {
 
   function loadUser() {
     login({ user_id: localStorage.getItem("user_id") }).then((res) => {
-      console.log(res);
-
       setFiles(() => [
         {
           id: 0,
@@ -107,11 +108,7 @@ export default function Tree() {
   const EditorChangeDebounced = _.debounce(
     function (value) {
       setCurrentValue(value);
-      if (currentId !== 0) {
-        editFile({ value, id: currentId }).then((res) => {
-          console.log(res);
-        });
-      }
+      editFile({ value, id: currentId }).then((res) => {});
     },
     300,
     { maxWait: 1000 }
@@ -137,7 +134,6 @@ export default function Tree() {
       name: newFileName.current.input.value + ".md",
       user_id: localStorage.getItem("user_id"),
     }).then((res) => {
-      console.log(res);
       message.success(`创建文件成功!`);
       loadUser();
     });
@@ -151,8 +147,49 @@ export default function Tree() {
     });
   }
 
+  const editorRef = useRef(null);
+  const previewRef = useRef(null);
+
+  useEffect(() => {
+    if (previewRef.current.children[1])
+      previewRef.current = previewRef.current.children[1];
+  }, [previewRef]);
+
+  function handleEditorDidMount(editor, monaco) {
+    editorRef.current = editor;
+
+    editorRef.current.onDidScrollChange((e) => {
+      if (previewRef.current) {
+        previewRef.current.scrollTop =
+          previewRef.current.scrollHeight * (e.scrollTop / e.scrollHeight);
+      }
+    });
+  }
+
   return (
-    <div style={{ padding: "0 8px", backgroundColor: "#F0F2F5" }}>
+    <div
+      style={{ padding: "0 8px", backgroundColor: "#F0F2F5" }}
+      onDragOver={() => {
+        Modal.info({
+          closable: true,
+          maskClosable: true,
+          icon: null,
+          okText: "取消",
+          centered: true,
+          width: "50vw",
+          content: (
+            <div style={{ height: "50vh" }}>
+              <Upload.Dragger {...uploadProps} style={{ marginTop: "24px" }}>
+                <p className="ant-upload-drag-icon">
+                  <InboxOutlined />
+                </p>
+                <p className="ant-upload-text">把文件拖到这里以导入</p>
+              </Upload.Dragger>
+            </div>
+          ),
+        });
+      }}
+    >
       <div style={{ padding: "8px 0", display: "flex", alignItems: "center" }}>
         <label style={{ marginRight: "8px" }}>
           编辑器主题：
@@ -192,10 +229,6 @@ export default function Tree() {
                   </Button>
                 </Space.Compact>
               ),
-
-              afterClose() {
-                console.log("close");
-              },
             });
           }}
           icon={<PlusOutlined />}
@@ -300,13 +333,20 @@ export default function Tree() {
             <Editor
               disabled
               width="100%"
-              height="90vh"
-              theme={checked ? "light" : "vs-dark"}
               path={currentId}
               defaultLanguage="markdown"
               value={currentValue}
               onChange={handleEditorChange}
+              onMount={handleEditorDidMount}
               loading="加载中..."
+              options={{
+                theme: checked ? "light" : "vs-dark",
+                readOnly: currentId === 0,
+                readOnlyMessage: {
+                  value: "这是内置的文件，是不可编辑的，请新建或导入您的文件",
+                },
+                mouseWheelZoom: true,
+              }}
             />
           </div>
         </Col>
@@ -333,6 +373,7 @@ export default function Tree() {
                 overflowY: "auto",
               },
             }}
+            ref={previewRef}
           >
             <div
               dangerouslySetInnerHTML={{
