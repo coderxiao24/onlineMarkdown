@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 127.0.0.1:3306
--- 生成日期： 2024-07-31 06:05:27
+-- 生成日期： 2024-08-01 05:45:32
 -- 服务器版本： 5.7.36
 -- PHP 版本： 7.4.26
 
@@ -34,15 +34,17 @@ CREATE TABLE IF NOT EXISTS `files` (
   `user_id` varchar(64) NOT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `name` varchar(1024) NOT NULL,
+  `update_time` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
 
 --
 -- 转存表中的数据 `files`
 --
 
-INSERT INTO `files` (`id`, `url`, `user_id`, `create_time`, `name`) VALUES
-(0, '/xiaokaixuan.md', '', '2024-07-31 05:46:34', '关于作者.md');
+INSERT INTO `files` (`id`, `url`, `user_id`, `create_time`, `name`, `update_time`) VALUES
+(0, '/xiaokaixuan.md', '', '2024-07-31 05:46:34', '关于作者.md', '2024-08-01 05:20:42'),
+(28, '/uploads/1722490660746_aaa.md', '3438dc06-38c5-4358-8d83-0a113acf554d', '2024-08-01 05:37:40', 'aaa.md', '2024-08-01 05:37:59');
 
 -- --------------------------------------------------------
 
@@ -55,6 +57,13 @@ CREATE TABLE IF NOT EXISTS `users` (
   `id` varchar(64) NOT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- 转存表中的数据 `users`
+--
+
+INSERT INTO `users` (`id`, `create_time`) VALUES
+('3438dc06-38c5-4358-8d83-0a113acf554d', '2024-07-31 09:14:05');
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

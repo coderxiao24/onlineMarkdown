@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import * as marked from "marked";
 import * as monaco from "monaco-editor";
+import _ from "lodash";
+
 import Editor, { loader } from "@monaco-editor/react";
 
 loader.config({ monaco });
@@ -17,15 +19,31 @@ import {
   Switch,
   Col,
   Row,
+  Modal,
+  Input,
+  Popover,
 } from "antd";
-import { ExportOutlined, ImportOutlined } from "@ant-design/icons";
+import {
+  ExportOutlined,
+  ImportOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons";
 import { baseUrl } from "../config/index";
-import { login, getFile, editFile, exportFile } from "../api/index";
+import {
+  login,
+  getFile,
+  editFile,
+  exportFile,
+  addFile,
+  delFile,
+} from "../api/index";
 export default function Tree() {
   const [files, setFiles] = useState([]);
   const [currentId, setCurrentId] = useState(0);
   const [currentValue, setCurrentValue] = useState("");
   const [checked, setChecked] = useState(false);
+  const newFileName = useRef(null);
 
   const [uploadProps, setUploadProps] = useState({
     name: "file",
@@ -61,7 +79,7 @@ export default function Tree() {
       setFiles(() => [
         {
           id: 0,
-          name: "关于作者.md",
+          name: "README.md",
           url: "/xiaokaixuan.md",
         },
         ...res.data.user.files,
@@ -81,12 +99,21 @@ export default function Tree() {
     setCurrentId(v.target.value);
   }
 
+  const EditorChangeDebounced = _.debounce(
+    function (value) {
+      setCurrentValue(value);
+      if (currentId !== 0) {
+        editFile({ value, id: currentId }).then((res) => {
+          console.log(res);
+        });
+      }
+    },
+    300,
+    { maxWait: 1000 }
+  );
+
   function handleEditorChange(value, event) {
-    setCurrentValue(value);
-    if (currentId !== 0)
-      editFile({ value, id: currentId }).then((res) => {
-        console.log(res);
-      });
+    EditorChangeDebounced(value);
   }
 
   function exportHandle() {
@@ -99,6 +126,26 @@ export default function Tree() {
       a.click();
     });
   }
+
+  function add() {
+    return addFile({
+      name: newFileName.current.input.value + ".md",
+      user_id: localStorage.getItem("user_id"),
+    }).then((res) => {
+      console.log(res);
+      message.success(`创建文件成功!`);
+      loadUser();
+    });
+  }
+
+  function del(id) {
+    delFile(id).then((res) => {
+      message.success(`删除文件成功!`);
+
+      loadUser();
+    });
+  }
+
   return (
     <div style={{ padding: "0 8px", backgroundColor: "#F0F2F5" }}>
       <div style={{ padding: "8px 0", display: "flex", alignItems: "center" }}>
@@ -111,7 +158,47 @@ export default function Tree() {
             onClick={() => setChecked((b) => !b)}
           />{" "}
         </label>
+        <Button
+          onClick={() => {
+            const modal = Modal.info({
+              closable: true,
+              maskClosable: true,
+              title: `为你新建的文件取个名字`,
+              footer: null,
+              content: (
+                <Space.Compact style={{ width: "100%" }}>
+                  <Input
+                    addonAfter=".md"
+                    allowClear
+                    ref={newFileName}
+                    onPressEnter={async () => {
+                      await add();
+                      modal.destroy();
+                    }}
+                  />
+                  <Button
+                    type="primary"
+                    onClick={async () => {
+                      await add();
+                      modal.destroy();
+                    }}
+                  >
+                    确定
+                  </Button>
+                </Space.Compact>
+              ),
 
+              afterClose() {
+                console.log("close");
+              },
+            });
+          }}
+          icon={<PlusOutlined />}
+          type="primary"
+          style={{ marginRight: "8px" }}
+        >
+          新建
+        </Button>
         <Upload {...uploadProps}>
           <Button
             icon={<ImportOutlined />}
@@ -160,11 +247,30 @@ export default function Tree() {
             >
               <Space direction="vertical" style={{ width: "100%" }}>
                 {files.map((v) => (
-                  <Tooltip title={v.name} key={v.id}>
+                  <Popover
+                    style={{ width: "100px" }}
+                    key={v.id}
+                    content={
+                      <>
+                        <span style={{ marginRight: "1em" }}>{v.name}</span>
+                        <Button
+                          disabled={v.id === 0}
+                          onClick={() => {
+                            del(v.id);
+                          }}
+                          icon={<DeleteOutlined />}
+                          type="primary"
+                          danger
+                        >
+                          删除
+                        </Button>
+                      </>
+                    }
+                  >
                     <Radio.Button value={v.id} style={{ width: "100%" }}>
                       {v.name}
                     </Radio.Button>
-                  </Tooltip>
+                  </Popover>
                 ))}
               </Space>
             </Radio.Group>

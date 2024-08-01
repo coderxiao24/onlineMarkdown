@@ -43,3 +43,30 @@ export function exportFile(id) {
     responseType: "blob",
   });
 }
+
+/**
+ * 新增文件
+ * @param {object} data
+ * @return {object} 结果
+ * @author 楷炫
+ */
+export function addFile(data) {
+  return axios({
+    method: "POST",
+    url: `/file/add`,
+    data,
+  });
+}
+
+/**
+ * 删除
+ * @param {object} id
+ * @return {object} 结果
+ * @author 楷炫
+ */
+export function delFile(id) {
+  return axios({
+    method: "DELETE",
+    url: `/file/${id}`,
+  });
+}
