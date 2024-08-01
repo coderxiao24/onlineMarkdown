@@ -52,6 +52,11 @@ export default function Tree() {
     headers: {},
     data: {},
     showUploadList: false,
+    beforeUpload(file) {
+      const res = file.name.split(".").pop() === "md";
+      if (!res) message.error("仅支持上传后缀是.md的文件类型!");
+      return res;
+    },
     onChange(info) {
       if (info.file.status === "done") {
         message.success(`${info.file.name}上传成功!`);
