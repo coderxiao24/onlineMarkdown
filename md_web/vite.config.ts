@@ -7,16 +7,27 @@ export default defineConfig({
   eslint: {
     enabled: false,
   },
+
+  build: {
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        //生产环境时移除console
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+  },
   server: {
     host: true,
     proxy: {
       "/xkx": {
-        target: "http://123.57.91.8:81/",
+        target: "http://123.57.91.8:1125/",
         // target: "http://localhost:1125/",
         changeOrigin: true,
-        // rewrite: (path) => {
-        //   return path.replace(/\/xkx/, "/api");
-        // },
+        rewrite: (path) => {
+          return path.replace(/\/xkx/, "/api");
+        },
       },
     },
   },

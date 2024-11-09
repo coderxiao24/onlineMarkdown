@@ -4,3 +4,13 @@ body {
   padding: 0;
   background-color: #f0f2f5;
 }
+
+.ant-tabs-tabpane,
+.ant-tabs-content {
+  height: 100%;
+}
+
+.ant-tabs-content-holder {
+  flex: 1;
+  overflow-y: auto;
+}

@@ -18,7 +18,7 @@ const promisePool = mysql2.createPool(config).promise();
 setInterval(async () => {
   let oldFiles = await promisePool.query(
     `SELECT * FROM files   
-    WHERE updated_time < NOW() - INTERVAL 7 DAY   
+    WHERE update_time < NOW() - INTERVAL 7 DAY   
     AND id != 0`
   );
 
@@ -48,6 +48,8 @@ setInterval(async () => {
         console.log(`从public里删除老文件${item.name}失败`, error);
       }
     });
+  } else {
+    console.log(`未查询到老文件`);
   }
 }, 1000 * 60 * 60);
 
